@@ -2,17 +2,7 @@ FROM ubuntu:20.04
 
 # Update package list and install dependencies
 RUN apt-get update && \
-    apt-get install -y curl gnupg2 lsb-release
-
-# Add the Nginx signing key
-RUN curl http://nginx.org/keys/nginx_signing.key | apt-key add -
-
-# Add the Nginx repository
-RUN echo "deb http://nginx.org/packages/ubuntu/ focal nginx" > /etc/apt/sources.list.d/nginx.list
-
-# Install Nginx
-RUN apt-get update && \
-    apt-get install -y nginx && \
+    apt-get install -y curl gnupg2 lsb-release nginx && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
