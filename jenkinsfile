@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Pull the code from GitHub to Jenkins workspace') {
+            steps {
+                git url: 'https://github.com/Amarnath11112/demo.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                echo 'Starting to build Docker image'
+                sh 'sudo docker build -t innover-system:$BUILD_NUMBER .'
+                echo '#### Successfully built Docker image ####'
+            }
+        }
+        stage('Docker Push Image') {
+            steps {
+                sh 'sudo docker tag innover-system:$BUILD_NUMBER amar585/amarnath/innover-system-docker-pipeline:$BUILD_NUMBER'
+                withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
+            }
+   
+                sh 'sudo docker push amar585/amarnath/innover-system-docker-pipeline:$BUILD_NUMBER'
+                echo '#### successfuly pushed docker image into Gitlab Container Registry ####'
+            }    
+        }
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${params.User_Name}@${params.Server_IP} '
+                        docker pull amar585/amarnath/innover-system-docker-pipeline:$BUILD_NUMBER &&
+                        docker stop innover-system || true &&
+                        docker rm innover-system || true &&
+                        docker run -d --name innover-system -p 8000:80 amar585/amarnath/innover-system-docker-pipeline:$BUILD_NUMBER
+                        '
+                        """
+                    }
+                echo '#### Successfully deployed Docker container ####'
+            }
+        }
+    }
+}
